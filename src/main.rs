@@ -74,7 +74,7 @@ async fn main() {
     loop {
         clear_background(DARKGRAY);
 
-        draw_text("Hello, Macroquad!", screen_w / 2.0, 60.0, 40.0, WHITE);
+        draw_text_h_centered("Hello, Macroquad!", 60.0, 40.0, WHITE);
 
         draw_rectangle(
             screen_width() / 2.0 - 50.0,
