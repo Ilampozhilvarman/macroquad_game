@@ -54,6 +54,12 @@ struct Board {
     current_rect: Rectangle,
 }
 
+fn draw_text_h_centered(text: &str, y: f32, font_size: f32, color: Color) {
+    let dims = measure_text(text, None, font_size as u16, 1.0);
+    let x = (screen_width() - dims.width) / 2.0;
+    draw_text(text, x, y, font_size, color);
+}
+
 //Constants
 const MOVEMENT_SPEED: f32 = 20.0;
 
@@ -68,7 +74,7 @@ async fn main() {
     loop {
         clear_background(DARKGRAY);
 
-        draw_text("Hello, Macroquad!", 40.0, 60.0, 40.0, WHITE);
+        draw_text("Hello, Macroquad!", screen_w / 2.0, 60.0, 40.0, WHITE);
 
         draw_rectangle(
             screen_width() / 2.0 - 50.0,
