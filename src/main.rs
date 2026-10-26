@@ -9,6 +9,7 @@ struct Rectangle {
     width: f32,
     height: f32,
     pos: Pos,
+    moving: bool,
 }
 
 impl Rectangle {
@@ -17,15 +18,28 @@ impl Rectangle {
             width,
             height,
             pos: Pos { x, y },
+            moving: false,
         }
     }
 
     fn left(&mut self, speed: f32) {
-        self.pos.x -= speed;
+        if !self.moving {
+            self.pos.x -= speed;
+        }
     }
 
     fn right(&mut self, speed: f32) {
-        self.pos.x += speed;
+        if !self.moving {
+            self.pos.x += speed;
+        }
+    }
+
+    fn start_moving(&mut self) {
+        self.moving = true;
+    }
+
+    fn stop_moving(&mut self) {
+        self.moving = false;
     }
 
     fn clamp(&mut self, screen_width: f32, screen_height: f32) {
