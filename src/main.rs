@@ -1,3 +1,5 @@
+use std::io::SeekFrom::Current;
+
 use macroquad::prelude::*;
 
 struct Pos {
@@ -46,6 +48,8 @@ impl Rectangle {
         self.pos.x = self.pos.x.clamp(0.0, screen_width - self.width);
         self.pos.y = self.pos.y.clamp(0.0, screen_height - self.height);
     }
+
+    fn draw(&mut self) {}
 }
 
 struct Board {
@@ -74,6 +78,12 @@ async fn main() {
     //Constant based
     let rect_width: f32 = screen_w / START_RECT_DIV_W;
     let rect_height: f32 = screen_h / START_RECT_DIV_H;
+    let current_rect: Rect = Rect {
+        x: screen_w / 2.0,
+        y: screen_h / 2.0,
+        w: rect_width,
+        h: rect_height,
+    };
 
     //Variables
     let mut game_manager: Board = Board {
@@ -85,6 +95,8 @@ async fn main() {
     set_fullscreen(true);
 
     loop {
+        //Moving square code
+        current_rect.left();
         clear_background(DARKGRAY);
 
         draw_text_h_centered("Hello, Macroquad!", 60.0, 40.0, WHITE);
