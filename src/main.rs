@@ -57,36 +57,173 @@ async fn main() {
     let mut speed: f32 = INITIAL_SPEED;
     let mut score: u32 = 0;
     let mut game_over: bool = false;
-
-    let screen_w = screen_width();
-    let screen_h = screen_height();
-
-    let block_height = screen_h / BLOCK_HEIGHT_RATIO;
-    let start_width = screen_w / START_WIDTH_RATIO;
+    let mut last_w: f32 = 0.0;
+    let mut last_h: f32 = 0.0;
 
     let mut stack: Vec<Block> = Vec::new();
-    let base_y = screen_h - block_height - 10.0;
-    stack.push(Block {
-        width: start_width,
-        height: block_height,
-        pos: Pos {
-            x: (screen_w - start_width) / 2.0,
-            y: base_y,
-        },
-        direction: 1.0,
-    });
+    let mut current = Block::new(0.0, 0.0, 1.0, 1.0);
+    let mut block_height: f32 = 0.0;
+    let mut start_width: f32 = 0.0;
 
-    let mut current = Block {
-        width: start_width,
-        height: block_height,
-        pos: Pos {
-            x: 0.0,
-            y: base_y - block_height,
-        },
-        direction: 1.0,
-    };
+    fn reset_game(
+        stack: &mut Vec<Block>,
+        current: &mut Block,
+        camera_y: &mut f32,
+        speed: &mut f32,
+        score: &mut u32,
+        game_over: &mut bool,
+        screen_w: f32,
+        screen_h: f32,
+        keep_state: bool,
+    ) {
+        let block_height = screen_h / BLOCK_HEIGHT_RATIO;
+        let start_width = screen_w / START_WIDTH_RATIO;
+        let base_y = screen_h - block_height - 10.0;
+        if !keep_state {
+            stack.clear();
+            stack.push(Block {
+                width: start_width,
+                height: block_height,
+                pos: Pos {
+                    x: (screen_w - start_width) / 2.0,
+                    y: base_y,
+                },
+                direction: 1.0,
+            });
+            *current = Block {
+                width: start_width,
+                height: block_height,
+                pos: Pos {
+                    x: 0.0,
+                    y: base_y - block_height,
+                },
+                direction: 1.0,
+            };
+            *camera_y = 0.0;
+            *speed = INITIAL_SPEED;
+            *score = 0;
+            *game_over = false;
+        } else {
+            // Rebuild stack to fit new screen while preserving structure
+            if !stack.is_empty() {
+                let old_block_height = stack[0].height;
+                let scale_h = if old_block_height > 0.0 {
+                    block_height / old_block_height
+                } else {
+                    1.0
+                };
+                // Scale vertically
+                for block in stack.iter_mut() {
+                    block.height = block_height;
+                    // keep relative vertical positioning roughly? easier to rebuild from bottom
+                }
+                // Rebuild from bottom up to match new dimensions
+                let mut new_stack: Vec<Block> = Vec::with_capacity(stack.len());
+                let mut base_y_new = screen_h - block_height - 10.0;
+                // First block (base)
+                new_stack.push(Block {
+                    width: start_width,
+                    height: block_height,
+                    pos: Pos {
+                        x: (screen_w - start_width) / 2.0,
+                        y: base_y_new,
+                    },
+                    direction: 1.0,
+                });
+                base_y_new -= block_height;
+                // Rebuild rest with scaled widths relative to previous
+                for i in 1..stack.len() {
+                    let prev_new = new_stack[i - 1];
+                    let old_block = stack[i];
+                    // Try to maintain relative size
+                    let scale_w = if stack[0].width > 0.0 {
+                        start_width / stack[0].width
+                    } else {
+                        1.0
+                    };
+                    let new_width = (old_block.width * scale_w).max(1.0).min(screen_w);
+                    // Align to previous block's position conceptually
+                    let new_x = prev_new.pos.x
+                        + (old_block.pos.x - stack[i - 1].pos.x)
+                            * (new_width / old_block.width.max(1.0));
+                    let new_x_clamped = new_x.max(0.0).min(screen_w - new_width);
+                    new_stack.push(Block {
+                        width: new_width,
+                        height: block_height,
+                        pos: Pos {
+                            x: new_x_clamped,
+                            y: base_y_new,
+                        },
+                        direction: 1.0,
+                    });
+                    base_y_new -= block_height;
+                }
+                *stack = new_stack;
+                // Update current block
+                if stack.is_empty() {
+                    *current = Block {
+                        width: start_width,
+                        height: block_height,
+                        pos: Pos {
+                            x: 0.0,
+                            y: screen_h - block_height * 2.0 - 10.0,
+                        },
+                        direction: 1.0,
+                    };
+                } else {
+                    let last = stack[stack.len() - 1];
+                    *current = Block {
+                        width: last.width,
+                        height: block_height,
+                        pos: Pos {
+                            x: 0.0,
+                            y: last.pos.y - block_height,
+                        },
+                        direction: 1.0,
+                    };
+                }
+            }
+        }
+    }
 
     loop {
+        let screen_w = screen_width();
+        let screen_h = screen_height();
+
+        if stack.is_empty() {
+            block_height = screen_h / BLOCK_HEIGHT_RATIO;
+            start_width = screen_w / START_WIDTH_RATIO;
+            reset_game(
+                &mut stack,
+                &mut current,
+                &mut camera_y,
+                &mut speed,
+                &mut score,
+                &mut game_over,
+                screen_w,
+                screen_h,
+                false,
+            );
+            last_w = screen_w;
+            last_h = screen_h;
+        } else if last_w != screen_w || last_h != screen_h {
+            block_height = screen_h / BLOCK_HEIGHT_RATIO;
+            start_width = screen_w / START_WIDTH_RATIO;
+            reset_game(
+                &mut stack,
+                &mut current,
+                &mut camera_y,
+                &mut speed,
+                &mut score,
+                &mut game_over,
+                screen_w,
+                screen_h,
+                true,
+            );
+            last_w = screen_w;
+            last_h = screen_h;
+        }
+
         clear_background(Color::new(0.1, 0.1, 0.15, 1.0));
 
         if !game_over {
@@ -129,30 +266,17 @@ async fn main() {
                 }
             }
         } else if is_key_pressed(KeyCode::R) || is_mouse_button_pressed(MouseButton::Left) {
-            stack.clear();
-            speed = INITIAL_SPEED;
-            score = 0;
-            camera_y = 0.0;
-            game_over = false;
-            let base_y = screen_h - block_height - 10.0;
-            stack.push(Block {
-                width: start_width,
-                height: block_height,
-                pos: Pos {
-                    x: (screen_w - start_width) / 2.0,
-                    y: base_y,
-                },
-                direction: 1.0,
-            });
-            current = Block {
-                width: start_width,
-                height: block_height,
-                pos: Pos {
-                    x: 0.0,
-                    y: base_y - block_height,
-                },
-                direction: 1.0,
-            };
+            reset_game(
+                &mut stack,
+                &mut current,
+                &mut camera_y,
+                &mut speed,
+                &mut score,
+                &mut game_over,
+                screen_w,
+                screen_h,
+                false,
+            );
         }
 
         let camera_offset = camera_y;
