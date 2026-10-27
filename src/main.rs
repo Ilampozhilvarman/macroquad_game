@@ -51,7 +51,7 @@ impl Rectangle {
 struct Board {
     rectangles: Vec<Rectangle>,
     score: u32,
-    current_rect: Rectangle,
+    current_rect: Option<Rectangle>,
 }
 
 fn draw_text_h_centered(text: &str, y: f32, font_size: f32, color: Color) {
@@ -62,12 +62,25 @@ fn draw_text_h_centered(text: &str, y: f32, font_size: f32, color: Color) {
 
 //Constants
 const MOVEMENT_SPEED: f32 = 20.0;
+const START_RECT_DIV_W: f32 = 10.0;
+const START_RECT_DIV_H: f32 = 10.0;
 
-#[macroquad::main("My First Game")]
+#[macroquad::main("Stacking Tower")]
 async fn main() {
     //Constants, but have to be declared at runtime
     let screen_w: f32 = screen_width();
     let screen_h: f32 = screen_height();
+
+    //Constant based
+    let rect_width: f32 = screen_w / START_RECT_DIV_W;
+    let rect_height: f32 = screen_h / START_RECT_DIV_H;
+
+    //Variables
+    let mut game_manager: Board = Board {
+        rectangles: Vec::new(),
+        score: 0,
+        current_rect: None,
+    };
 
     set_fullscreen(true);
 
@@ -76,13 +89,9 @@ async fn main() {
 
         draw_text_h_centered("Hello, Macroquad!", 60.0, 40.0, WHITE);
 
-        draw_rectangle(
-            screen_width() / 2.0 - 50.0,
-            screen_height() / 2.0 - 50.0,
-            100.0,
-            100.0,
-            GREEN,
-        );
+        for rect in &game_manager.rectangles {
+            draw_rectangle(rect.pos.x, rect.pos.y, rect.width, rect.height, GREEN);
+        }
 
         next_frame().await;
     }
