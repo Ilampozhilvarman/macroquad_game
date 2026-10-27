@@ -49,7 +49,9 @@ impl Rectangle {
         self.pos.y = self.pos.y.clamp(0.0, screen_height - self.height);
     }
 
-    fn draw(&mut self) {}
+    fn draw(&mut self, color: Color) {
+        draw_rectangle(self.pos.x, self.pos.y, self.width, self.height, color);
+    }
 }
 
 struct Board {
@@ -68,6 +70,7 @@ fn draw_text_h_centered(text: &str, y: f32, font_size: f32, color: Color) {
 const MOVEMENT_SPEED: f32 = 20.0;
 const START_RECT_DIV_W: f32 = 10.0;
 const START_RECT_DIV_H: f32 = 10.0;
+const COLOR: Color = GREEN;
 
 #[macroquad::main("Stacking Tower")]
 async fn main() {
@@ -101,8 +104,8 @@ async fn main() {
 
         draw_text_h_centered("Hello, Macroquad!", 60.0, 40.0, WHITE);
 
-        for rect in &game_manager.rectangles {
-            draw_rectangle(rect.pos.x, rect.pos.y, rect.width, rect.height, GREEN);
+        for rect in &mut game_manager.rectangles {
+            rect.draw(COLOR);
         }
 
         next_frame().await;
