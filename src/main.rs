@@ -63,7 +63,7 @@ async fn main() {
     let mut stack: Vec<Block> = Vec::new();
     let mut current = Block::new(0.0, 0.0, 1.0, 1.0);
     let mut block_height: f32 = 0.0;
-    let mut start_width: f32 = 0.0;
+    let _start_width: f32 = 0.0;
 
     fn reset_game(
         stack: &mut Vec<Block>,
@@ -107,7 +107,7 @@ async fn main() {
             // Rebuild stack to fit new screen while preserving structure
             if !stack.is_empty() {
                 let old_block_height = stack[0].height;
-                let scale_h = if old_block_height > 0.0 {
+                let _scale_h = if old_block_height > 0.0 {
                     block_height / old_block_height
                 } else {
                     1.0
@@ -192,7 +192,7 @@ async fn main() {
 
         if stack.is_empty() {
             block_height = screen_h / BLOCK_HEIGHT_RATIO;
-            start_width = screen_w / START_WIDTH_RATIO;
+            let start_width_cur = screen_w / START_WIDTH_RATIO;
             reset_game(
                 &mut stack,
                 &mut current,
@@ -204,11 +204,12 @@ async fn main() {
                 screen_h,
                 false,
             );
+            let _ = start_width_cur;
             last_w = screen_w;
             last_h = screen_h;
         } else if last_w != screen_w || last_h != screen_h {
             block_height = screen_h / BLOCK_HEIGHT_RATIO;
-            start_width = screen_w / START_WIDTH_RATIO;
+            let _start_width_cur = screen_w / START_WIDTH_RATIO;
             reset_game(
                 &mut stack,
                 &mut current,
